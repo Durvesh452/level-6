@@ -1,0 +1,6 @@
+Timestamp,Email,Name,Wallet Address,Product Rating (1-5),Product Feedback
+2026-04-16 10:20:15,alice@example.com,Alice Smith,GDV6O3V7Z2V...Z2V,5,"Amazing UI. The Stellar integration is so fast!"
+2026-04-16 11:45:22,bob@test.org,Bob Roberts,GAW7...RLQ,4,"Works great! Would love to see support for more file types."
+2026-04-16 14:10:05,charlie@web3.io,Charlie Brown,GBX...ZXY,5,"The design feels like a multi-million dollar app. Great job."
+2026-04-17 09:30:11,david@dev.co,David Miller,GCY...ABC,4,"Easy to use. The copy buttons for keys are a lifesaver."
+2026-04-17 12:05:59,eve@proptech.com,Eve Taylor,GDZ...DEF,5,"Fraud prevention in real estate is a huge problem. This tool is valuable."
