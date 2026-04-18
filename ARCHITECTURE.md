@@ -18,18 +18,21 @@ TrustLand allows users to create a cryptographically verifiable "digital twin" o
 ## 3. Core Logic & Data Flow
 
 ### 3.1 Document Hashing (Local-first)
-When a user uploads a document, the system reads the file as an `ArrayBuffer` and computes its SHA-256 hash directly in the browser. 
+When a user uploads a document, the system reads the file as an `ArrayBuffer` and computes its SHA-256 hash directly in the browser.
+- **Multi-File Support**: The system now supports batch selection. It iterates through all selected files, generating independent hashes for each.
 **Privacy Note**: The original document is never uploaded to any server or stored on-chain. Only the hash is used.
 
 ### 3.2 On-Chain Anchoring
-The hash is recorded on the Stellar Testnet through a `manageData` operation. Additionally, the hash (truncated) is added to the transaction `Memo` for easier lookups on blockchain explorers like Stellar Expert.
+The hash is recorded on the Stellar Testnet through a `manageData` operation. 
+- **Batch Registry**: In multi-file scenarios, the system submits separate transactions for each file (to maintain record atomicity) or packs multiple `manageData` entries.
+- **Metadata Storage**: Core metadata (hashes) are stored on-chain. Advanced metadata (Survey ID, Coordinates, Owner ID) are linked to the transaction hash and persisted in the registry state.
 - **Account Funding**: New users can automatically fund their accounts via the Stellar Friendbot.
-- **Transaction Signing**: Transactions are signed using the user's secret key (generated upon registration and stored in LocalStorage).
+- **Transaction Signing**: Transactions are signed using the user's secret key.
 
 ### 3.3 Verification Process
 The verification tool allows any user to upload a document. The system re-computes the hash and compares it against:
 1. Local registration records (for performance).
-2. Potentially, on-chain ledger records (manually verifiable via transactional proof).
+2. On-Chain Ledger: The tool retrieves the anchored metadata (Survey ID, Coordinates, etc.) once a cryptographic match is found, providing full transparency.
 
 ## 4. UI/UX Design
 
