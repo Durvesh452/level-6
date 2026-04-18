@@ -462,7 +462,7 @@
                                 <input 
                                     type="email" 
                                     required
-                                    className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:border-primary outline-none transition-all"
+                                    className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:border-primary outline-none transition-all text-white"
                                     placeholder="name@example.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -473,7 +473,7 @@
                                 <input 
                                     type="password" 
                                     required
-                                    className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:border-primary outline-none transition-all"
+                                    className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:border-primary outline-none transition-all text-white"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -543,7 +543,7 @@
                                     <input 
                                         type="email" 
                                         required
-                                        className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:border-primary outline-none transition-all"
+                                        className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:border-primary outline-none transition-all text-white"
                                         placeholder="name@example.com"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -554,7 +554,7 @@
                                     <input 
                                         type="password" 
                                         required
-                                        className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:border-primary outline-none transition-all"
+                                        className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:border-primary outline-none transition-all text-white"
                                         placeholder="••••••••"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
@@ -754,9 +754,11 @@
                                             </div>
                                             <div>
                                                 <h4 className="font-bold text-lg">{doc.name}</h4>
-                                                <div className="flex items-center gap-4 text-xs text-muted font-medium mt-1">
+                                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted font-medium mt-1">
                                                     <span className="flex items-center gap-1"><Icon name="map-pin" size={12} /> {doc.location}</span>
                                                     <span className="flex items-center gap-1"><Icon name="calendar" size={12} /> {new Date(doc.timestamp).toLocaleDateString()}</span>
+                                                    {doc.surveyId && <span className="flex items-center gap-1 text-secondary/80 font-bold"><Icon name="hash" size={12} /> {doc.surveyId}</span>}
+                                                    {doc.coordinates && <span className="flex items-center gap-1 text-primary/80"><Icon name="globe" size={12} /> {doc.coordinates}</span>}
                                                 </div>
                                             </div>
                                         </div>
@@ -792,9 +794,16 @@
 
         const RegisterPage = ({ navigate, user, addToast }) => {
             const [step, setStep] = useState(1);
-            const [file, setFile] = useState(null);
-            const [hash, setHash] = useState('');
-            const [formData, setFormData] = useState({ name: '', location: '', type: 'Title Deed' });
+            const [files, setFiles] = useState([]);
+            const [hashes, setHashes] = useState([]);
+            const [formData, setFormData] = useState({ 
+                name: '', 
+                location: '', 
+                type: 'Title Deed',
+                surveyId: '',
+                coordinates: '',
+                ownerId: ''
+            });
             const [isLoading, setIsLoading] = useState(false);
             const [accountStatus, setAccountStatus] = useState('checking');
 
@@ -827,21 +836,25 @@
             };
 
             const handleFileChange = async (e) => {
-                const selectedFile = e.target.files[0];
-                if (!selectedFile) return;
+                const selectedFiles = Array.from(e.target.files);
+                if (selectedFiles.length === 0) return;
                 
                 setIsLoading(true);
-                setFile(selectedFile);
+                setFiles(selectedFiles);
                 
                 try {
-                    const buffer = await selectedFile.arrayBuffer();
-                    const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-                    const hashArray = Array.from(new Uint8Array(hashBuffer));
-                    const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-                    setHash(hashHex);
+                    const newHashes = [];
+                    for (const file of selectedFiles) {
+                        const buffer = await file.arrayBuffer();
+                        const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+                        const hashArray = Array.from(new Uint8Array(hashBuffer));
+                        const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+                        newHashes.push(hashHex);
+                    }
+                    setHashes(newHashes);
                     setStep(2);
                 } catch (err) {
-                    addToast("Error hashing file", "error");
+                    addToast("Error hashing files", "error");
                 } finally {
                     setIsLoading(false);
                 }
@@ -852,36 +865,50 @@
                 try {
                     const server = new StellarSdk.Horizon.Server("https://horizon-testnet.stellar.org");
                     const account = await server.loadAccount(user.publicKey);
-                    
-                    const tx = new StellarSdk.TransactionBuilder(account, {
-                        fee: StellarSdk.BASE_FEE,
-                        networkPassphrase: StellarSdk.Networks.TESTNET
-                    })
-                    .addOperation(StellarSdk.Operation.manageData({
-                        name: "doc_hash",
-                        value: hash.substring(0, 64)
-                    }))
-                    .addMemo(StellarSdk.Memo.text(hash.substring(0, 28))) // Max 28 chars for text memo
-                    .setTimeout(30)
-                    .build();
+                    const newDocs = [];
 
-                    tx.sign(StellarSdk.Keypair.fromSecret(user.secretKey));
-                    const result = await server.submitTransaction(tx);
-                    
-                    const docData = {
-                        id: result.hash,
-                        name: formData.name,
-                        location: formData.location || 'Not Specified',
-                        type: formData.type,
-                        hash: hash,
-                        txId: result.hash,
-                        timestamp: new Date().toISOString()
-                    };
+                    for (let i = 0; i < hashes.length; i++) {
+                        const currentHash = hashes[i];
+                        const currentFile = files[i];
+                        
+                        const tx = new StellarSdk.TransactionBuilder(account, {
+                            fee: StellarSdk.BASE_FEE,
+                            networkPassphrase: StellarSdk.Networks.TESTNET
+                        })
+                        .addOperation(StellarSdk.Operation.manageData({
+                            name: `hash_${i}`,
+                            value: currentHash.substring(0, 64)
+                        }))
+                        .addMemo(StellarSdk.Memo.text(currentHash.substring(0, 28)))
+                        .setTimeout(30)
+                        .build();
 
-                    const docs = JSON.parse(localStorage.getItem('trustland_documents') || '[]');
-                    localStorage.setItem('trustland_documents', JSON.stringify([docData, ...docs]));
+                        tx.sign(StellarSdk.Keypair.fromSecret(user.secretKey));
+                        const result = await server.submitTransaction(tx);
+                        
+                        const docData = {
+                            id: result.hash,
+                            name: hashes.length > 1 ? `${formData.name} - Part ${i+1}` : formData.name,
+                            fileName: currentFile.name,
+                            location: formData.location || 'Not Specified',
+                            type: formData.type,
+                            surveyId: formData.surveyId,
+                            coordinates: formData.coordinates,
+                            ownerId: formData.ownerId,
+                            hash: currentHash,
+                            txId: result.hash,
+                            timestamp: new Date().toISOString()
+                        };
+                        newDocs.push(docData);
+                        
+                        // Update account sequence for next transaction in loop
+                        account.sequence = (BigInt(account.sequence) + 1n).toString();
+                    }
+
+                    const existingDocs = JSON.parse(localStorage.getItem('trustland_documents') || '[]');
+                    localStorage.setItem('trustland_documents', JSON.stringify([...newDocs, ...existingDocs]));
                     
-                    addToast("Document registered on blockchain!", "success");
+                    addToast(`${hashes.length} document(s) registered successfully!`, "success");
                     navigate('dashboard');
                 } catch (err) {
                     console.error(err);
@@ -941,7 +968,7 @@
                                         <p className="text-sm text-muted">PDF, PNG, JPG up to 10MB</p>
                                         <p className="mt-6 px-4 py-2 bg-surface border border-border rounded-xl text-xs font-bold uppercase tracking-widest">Select File</p>
                                     </div>
-                                    <input type="file" className="hidden" onChange={handleFileChange} />
+                                    <input type="file" className="hidden" onChange={handleFileChange} multiple />
                                 </label>
                                 <p className="text-center text-xs text-muted flex items-center justify-center gap-2">
                                     <Icon name="lock" size={12} /> Privacy Guaranteed: Documents are hashed locally and never uploaded to our servers.
@@ -955,34 +982,38 @@
                                     <div className="p-4 bg-background border border-border rounded-2xl flex items-center gap-4">
                                         <Icon name="file-check" className="text-secondary" />
                                         <div className="flex-grow">
-                                            <p className="text-xs font-bold text-muted uppercase">SHA-256 HASH GENERATED</p>
-                                            <p className="text-xs font-mono text-secondary break-all">{hash}</p>
+                                            <p className="text-xs font-bold text-muted uppercase">{files.length} Document(s) Ready</p>
+                                            <div className="max-h-20 overflow-y-auto mt-2 space-y-1">
+                                                {files.map((f, i) => (
+                                                    <p key={i} className="text-[10px] font-mono text-secondary truncate">{f.name} - {hashes[i]?.substring(0, 16)}...</p>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="md:col-span-2">
-                                            <label className="block text-sm font-bold mb-2 text-muted uppercase">Document Name</label>
+                                            <label className="block text-sm font-bold mb-2 text-muted uppercase tracking-wider">Project / Batch Name</label>
                                             <input 
-                                                className="w-full bg-background border border-border rounded-xl px-4 py-3 outline-none focus:border-primary"
+                                                className="w-full bg-background border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-white"
                                                 placeholder="e.g. Title Deed - Plot 45A"
                                                 value={formData.name}
                                                 onChange={e => setFormData({...formData, name: e.target.value})}
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-bold mb-2 text-muted uppercase">Location / County</label>
+                                            <label className="block text-sm font-bold mb-2 text-muted uppercase tracking-wider">Location / County</label>
                                             <input 
-                                                className="w-full bg-background border border-border rounded-xl px-4 py-3 outline-none focus:border-primary"
+                                                className="w-full bg-background border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-white"
                                                 placeholder="e.g. Nairobi, Kenya"
                                                 value={formData.location}
                                                 onChange={e => setFormData({...formData, location: e.target.value})}
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-bold mb-2 text-muted uppercase">Document Type</label>
+                                            <label className="block text-sm font-bold mb-2 text-muted uppercase tracking-wider">Document Type</label>
                                             <select 
-                                                className="w-full bg-background border border-border rounded-xl px-4 py-3 outline-none focus:border-primary"
+                                                className="w-full bg-background border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-white"
                                                 value={formData.type}
                                                 onChange={e => setFormData({...formData, type: e.target.value})}
                                             >
@@ -991,6 +1022,33 @@
                                                 <option>Land Survey</option>
                                                 <option>Sales Agreement</option>
                                             </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold mb-2 text-muted uppercase tracking-wider">Survey Number / ID</label>
+                                            <input 
+                                                className="w-full bg-background border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-white"
+                                                placeholder="e.g. SURV-9901-X"
+                                                value={formData.surveyId}
+                                                onChange={e => setFormData({...formData, surveyId: e.target.value})}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold mb-2 text-muted uppercase tracking-wider">GPS Coordinates</label>
+                                            <input 
+                                                className="w-full bg-background border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-white"
+                                                placeholder="e.g. -1.2863, 36.8172"
+                                                value={formData.coordinates}
+                                                onChange={e => setFormData({...formData, coordinates: e.target.value})}
+                                            />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-bold mb-2 text-muted uppercase tracking-wider">Owner National ID / Passport</label>
+                                            <input 
+                                                className="w-full bg-background border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-white"
+                                                placeholder="e.g. ID-88220033"
+                                                value={formData.ownerId}
+                                                onChange={e => setFormData({...formData, ownerId: e.target.value})}
+                                            />
                                         </div>
                                     </div>
                                     
@@ -1160,6 +1218,24 @@
                                                 <span className="text-muted font-bold uppercase tracking-wider text-xs">Location</span>
                                                 <span className="font-bold">{result.doc.location}</span>
                                             </div>
+                                            {result.doc.surveyId && (
+                                                <div className="flex justify-between items-center text-sm border-b border-border/50 pb-2">
+                                                    <span className="text-muted font-bold uppercase tracking-wider text-xs">Survey ID</span>
+                                                    <span className="font-bold text-secondary">{result.doc.surveyId}</span>
+                                                </div>
+                                            )}
+                                            {result.doc.coordinates && (
+                                                <div className="flex justify-between items-center text-sm border-b border-border/50 pb-2">
+                                                    <span className="text-muted font-bold uppercase tracking-wider text-xs">GPS Coordinates</span>
+                                                    <span className="font-bold text-primary">{result.doc.coordinates}</span>
+                                                </div>
+                                            )}
+                                            {result.doc.ownerId && (
+                                                <div className="flex justify-between items-center text-sm border-b border-border/50 pb-2">
+                                                    <span className="text-muted font-bold uppercase tracking-wider text-xs">Reg. Owner ID</span>
+                                                    <span className="font-bold">{result.doc.ownerId}</span>
+                                                </div>
+                                            )}
                                             <div className="flex justify-between items-center text-sm border-b border-border/50 pb-2">
                                                 <span className="text-muted font-bold uppercase tracking-wider text-xs">Registry Date</span>
                                                 <span className="font-bold">{new Date(result.doc.timestamp).toLocaleString()}</span>
