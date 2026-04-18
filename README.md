@@ -7,7 +7,7 @@ TrustLand is a professional web application built on the Stellar blockchain to s
 ### 🌐 Links
 - **Live Demo**: [Open TrustLand](https://trustland-stellar.vercel.app/) *(Placeholder)*
 - **Demo Video**: [Watch Demo](https://youtu.be/dummy-video-id) *(Placeholder)*
-- **Public Repository**: [GitHub - TrustLand](https://github.com/Durvesh452/trustland) *(Placeholder)*
+- **Public Repository**: [GitHub - TrustLand](https://github.com/Durvesh452/LEVEL-5)
 
 ---
 
@@ -45,9 +45,9 @@ See our [ARCHITECTURE.md](./ARCHITECTURE.md) for a deep dive into the system des
 Based on the feedback collected, we have completed the first iteration of improvements:
 
 1.  **Multiple File Support**: Implementation to support batch document uploads and hashing.
-    - *Git Reference*: [Commit: 50d0f45](https://github.com/Durvesh452/trustland/commit/50d0f45)
+    - *Git Reference*: [Commit: 50d0f45](https://github.com/Durvesh452/LEVEL-5/commit/50d0f45)
 2.  **Metadata Expansion**: Adding custom fields for plot coordinates and survey numbers.
-    - *Git Reference*: [Commit: 50d0f45](https://github.com/Durvesh452/trustland/commit/50d0f45)
+    - *Git Reference*: [Commit: 50d0f45](https://github.com/Durvesh452/LEVEL-5/commit/50d0f45)
 3.  **On-Chain Indexer**: Planned for Phase 3.
 
 ---
