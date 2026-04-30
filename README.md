@@ -12,6 +12,10 @@ TrustLand is a production-grade decentralized land registry platform built on th
 - **User Guide**: [USER_GUIDE.md](./USER_GUIDE.md)
 - **Community Contribution**: [Twitter Post (Template)](https://twitter.com/intent/tweet?text=Securing%20the%20future%20of%20land%20ownership%20with%20TrustLand!)
 
+### 💻 Local Testing Links
+- **Local App**: [http://localhost:3000](http://localhost:3000)
+- **Local Metrics**: [http://localhost:3000/admin/dashboard](http://localhost:3000/admin/dashboard)
+
 ---
 
 ### 🚀 Production Features (Black Belt Edition)
