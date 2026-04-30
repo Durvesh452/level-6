@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #0A0A0F;
+  --color-surface: #111118;
+  --color-border: #1E1E2E;
+  --color-primary: #6C63FF;
+  --color-primary-hover: #5A52E5;
+  --color-secondary: #00D4AA;
+  --color-danger: #FF4757;
+  --color-warning: #FFA502;
+  --color-muted: #8888AA;
+  --color-accent: #F0F0FF;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  --animate-slow-pulse: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+}
+
+:root {
+  --background: #0A0A0F;
+  --foreground: #F0F0FF;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+.glass {
+  background: rgba(17, 17, 24, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid #1E1E2E;
+}
+
+.glass-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-hover:hover {
+  background: rgba(25, 25, 35, 0.9);
+  border-color: #6C63FF;
+  transform: translateY(-2px);
+}
+
+.animated-gradient-text {
+  background: linear-gradient(to right, #6C63FF, #00D4AA, #6C63FF);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient 3s linear infinite;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0A0F;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E1E2E;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6C63FF;
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  animation: shimmer 2s infinite;
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
