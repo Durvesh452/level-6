@@ -5,7 +5,7 @@ TrustLand is a production-grade decentralized land registry platform built on th
 ---
 
 ### 🌐 Links
-- **Live Demo**: [Open TrustLand](https://trustland-v2.vercel.app)
+- **Live Demo**: [Open TrustLand](https://youtu.be/mijzZ-XTi1E))
 - **Presentation**: [Demo Day Slides](./PRESENTATION.md)
 - **Metrics Dashboard**: [View Admin Metrics](https://trustland-v2.vercel.app/admin/dashboard)
 - **Technical Documentation**: [TECHNICAL_DOCS.md](./TECHNICAL_DOCS.md)
